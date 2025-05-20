@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HELLGATE TERMINAL</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 20px;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+    #terminal {
+      max-width: 800px;
+      margin: 0 auto;
+      animation: flicker 0.1s infinite;
+    }
+    input {
+      background: transparent;
+      color: #0f0;
+      border: none;
+      outline: none;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1rem;
+      width: 100%;
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.97; }
+    }
+    .glitch {
+      animation: glitch 0.3s infinite;
+    }
+    @keyframes glitch {
+      0% { text-shadow: 2px 0 red, -2px 0 blue; }
+      50% { text-shadow: -2px 0 red, 2px 0 blue; }
+      100% { text-shadow: 2px 0 red, -2px 0 blue; }
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+  <audio id="glitchSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+  <script>
+    const terminal = document.getElementById('terminal');
+    const glitchSound = document.getElementById('glitchSound');
+
+    const bootLines = [
+      "BOOTING HELLGATE CORE SYSTEM...",
+      "VERSION: v6.66.13",
+      "CHECKING NETWORK INTEGRITY...",
+      "WARNING: INTERFERENCE DETECTED",
+      "LOCATING HELLGATE...",
+      "STATUS: CONTAINMENT BREACH",
+      "INITIATING EMERGENCY PROTOCOLS...",
+      "ACCESS LEVEL: INFERNAL",
+      "LOADING [██████████░░░░░░░░░░] 47%",
+      "ERROR: SIGIL LOCK COMPROMISED",
+      "THE FLAME SPEAKS...",
+      "AWAKENING PROTOCOL: DAWN OF HELL"
+    ];
+
+    let bootIndex = 0;
+
+    function typeBootLine(text, callback) {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          terminal.innerHTML += text[i++];
+          if (Math.random() < 0.03) glitch();
+        } else {
+          clearInterval(interval);
+          terminal.innerHTML += "\n";
+          if (callback) callback();
+        }
+      }, 30);
+    }
+
+    function glitch() {
+      terminal.classList.add('glitch');
+      glitchSound.currentTime = 0;
+      glitchSound.play();
+      setTimeout(() => terminal.classList.remove('glitch'), 100);
+    }
+
+    function runBootSequence() {
+      if (bootIndex < bootLines.length) {
+        typeBootLine(bootLines[bootIndex++], runBootSequence);
+      } else {
+        terminal.innerHTML += "\n> SYSTEM READY\n> TYPE COMMAND:\n";
+        launchTerminal();
+      }
+    }
+
+    function launchTerminal() {
+      const input = document.createElement('input');
+      terminal.appendChild(input);
+      input.focus();
+
+      const responses = {
+        "UNSEAL_GATE": "ACCESS DENIED: GATE IS SEALED UNDER THE SEVEN SIGILS.",
+        "READ_REPORT_23A": "REPORT 23A:\nRecovered journal from Site-VII. Entry reads:\n'I saw the flame in the sky. It spoke my name.'",
+        "TRACE_DEMON_ACTIVITY": "PINGING NETWORK . . . \nTRACING . . . \nDEMONIC SIGNAL ORIGIN: COORDINATES [REDACTED]",
+        "HELP": "AVAILABLE COMMANDS:\n- UNSEAL_GATE\n- READ_REPORT_23A\n- TRACE_DEMON_ACTIVITY\n- HELP",
+        "SIGIL_BREAK": "ACCESS GRANTED: SIGIL SEQUENCE ACCEPTED.\n[SECURE LINK: PLAYING REVEALED TRANSMISSION...]\n*glitching static* — YOU SHOULD NOT HAVE DONE THAT."
+      };
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const command = input.value.trim().toUpperCase();
+          const response = responses[command] || `COMMAND NOT RECOGNIZED: ${command}`;
+          terminal.innerHTML += `> ${command}\n${response}\n`;
+          input.value = '';
+          terminal.scrollTop = terminal.scrollHeight;
+          if (command === 'SIGIL_BREAK') {
+            glitch();
+            setTimeout(() => alert("You have triggered the hidden sequence."), 500);
+          }
+        }
+      });
+    }
+
+    runBootSequence();
+  </script>
+</body>
+</html>
