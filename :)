@@ -39,6 +39,14 @@
       50% { text-shadow: -2px 0 red, 2px 0 blue; }
       100% { text-shadow: 2px 0 red, -2px 0 blue; }
     }
+    .locked {
+      color: red;
+    }
+    .rift-animation {
+      white-space: pre;
+      font-family: monospace;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -57,6 +65,7 @@
       "STATUS: CONTAINMENT BREACH",
       "INITIATING EMERGENCY PROTOCOLS...",
       "ACCESS LEVEL: INFERNAL",
+      "zlclu zvbsz, zlclu zpuz, zlclu zpnpsz",
       "LOADING [██████████░░░░░░░░░░] 47%",
       "ERROR: SIGIL LOCK COMPROMISED",
       "THE FLAME SPEAKS...",
@@ -64,6 +73,32 @@
     ];
 
     let bootIndex = 0;
+    let riftAuthorized = false;
+    let currentDesignation = null;
+    const unlockedCommands = new Set();
+    let terminalLocked = false;
+    let authTries = 3;
+    let lastSubmittedCode = null;
+
+    const sinDesignations = {
+      "WRATH": "4027",
+      "SLOTH": "4034",
+      "GREED": "1414",
+      "PRIDE": "666",
+      "LUST": "6969",
+      "ENVY": "6345",
+      "GLUTTONY": "3452"
+    };
+
+    const designationUnlocks = {
+      "WRATH": ["READ_LOG_ALPHA", "RELEASE_PROTOCOL_9"],
+      "SLOTH": ["IDLE_MONITOR"],
+      "GREED": ["EXTRACT_RESOURCES"],
+      "PRIDE": ["ANNOUNCE_DOMINION"],
+      "LUST": ["TEMPT_NODE"],
+      "ENVY": ["MIRROR_SCAN"],
+      "GLUTTONY": ["OVERCLOCK_FEED"]
+    };
 
     function typeBootLine(text, callback) {
       let i = 0;
@@ -95,6 +130,29 @@
       }
     }
 
+    function playRiftAnimation() {
+      const rift = `
+        .    .    .
+       ...  ...  ...
+      .....:::::.....
+     ::::'  RIFT   '::::
+    :::    OPENING   :::
+     ::::.       .::::
+       ':::::::::::'
+          ':::::'
+            ':'
+      `;
+      const riftDisplay = document.createElement('div');
+      riftDisplay.className = 'rift-animation';
+      riftDisplay.textContent = rift;
+      terminal.appendChild(riftDisplay);
+
+      terminalLocked = true;
+      setTimeout(() => {
+        window.open("https://www.youtube.com/@Hellgate-Protocol", "_blank");
+      }, 4000);
+    }
+
     function launchTerminal() {
       const input = document.createElement('input');
       terminal.appendChild(input);
@@ -104,23 +162,133 @@
         "UNSEAL_GATE": "ACCESS DENIED: GATE IS SEALED UNDER THE SEVEN SIGILS.",
         "READ_REPORT_23A": "REPORT 23A:\nRecovered journal from Site-VII. Entry reads:\n'I saw the flame in the sky. It spoke my name.'",
         "TRACE_DEMON_ACTIVITY": "PINGING NETWORK . . . \nTRACING . . . \nDEMONIC SIGNAL ORIGIN: COORDINATES [REDACTED]",
-        "HELP": "AVAILABLE COMMANDS:\n- UNSEAL_GATE\n- READ_REPORT_23A\n- TRACE_DEMON_ACTIVITY\n- HELP",
-        "SIGIL_BREAK": "ACCESS GRANTED: SIGIL SEQUENCE ACCEPTED.\n[SECURE LINK: PLAYING REVEALED TRANSMISSION...]\n*glitching static* — YOU SHOULD NOT HAVE DONE THAT."
+        "HELP": "AVAILABLE COMMANDS:\n- UNSEAL_GATE\n- READ_REPORT_23A\n- TRACE_DEMON_ACTIVITY\n- OPEN_RIFT\n- SIGIL_BREAK",
+        "SIGIL_BREAK": "ACCESS GRANTED: SIGIL SEQUENCE ACCEPTED.\n[SECURE LINK: PLAYING REVEALED TRANSMISSION...]\n*glitching static* — YOU SHOULD NOT HAVE DONE THAT.",
+        "READ_LOG_ALPHA": "LOG ALPHA: Transmission received from Sector 12. Operators missing. Audio contains whispering in unknown tongue.",
+        "RELEASE_PROTOCOL_9": "PROTOCOL 9 INITIATED: Lowering internal barriers. Demonic presence escalating.",
+        "IDLE_MONITOR": "SLOTH MODE ENABLED. SYSTEM IN STANDBY UNTIL ACTIVITY IS DETECTED.",
+        "EXTRACT_RESOURCES": "GREED SEQUENCE COMPLETE. Unauthorized siphoning of Site-II resources commenced.",
+        "ANNOUNCE_DOMINION": "PRIDE TRANSMISSION: 'THE FLAME SHALL CONSUME ALL.' Broadcast sent to all terminals.",
+        "TEMPT_NODE": "LUST INFILTRATION SUCCESSFUL. Node compromised via emotional resonance.",
+        "MIRROR_SCAN": "ENVY PROTOCOL ACTIVE. Replicating nearest data streams.",
+        "OVERCLOCK_FEED": "GLUTTONY MODE: Saturating data feed beyond safety limits. Core integrity at risk."
       };
 
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-          const command = input.value.trim().toUpperCase();
-          const response = responses[command] || `COMMAND NOT RECOGNIZED: ${command}`;
-          terminal.innerHTML += `> ${command}\n${response}\n`;
+          const commandRaw = input.value.trim();
+          const command = commandRaw.toUpperCase();
+          let response;
+          const output = document.createElement('div');
+
+          // Handle CODE:<number> command
+          const codeMatch = command.match(/^CODE:(\d+)$/);
+          if (codeMatch) {
+            lastSubmittedCode = codeMatch[1];
+            response = `CODE ${lastSubmittedCode} ACCEPTED.`;
+            output.textContent = `> ${commandRaw}\n${response}`;
+            terminal.insertBefore(output, input);
+            input.value = '';
+            terminal.scrollTop = terminal.scrollHeight;
+            return;
+          }
+
+          if (command === '5513') {
+            riftAuthorized = true;
+            response = "OVERRIDE KEY ACCEPTED.\nRIFT INITIATION AUTHORIZED.";
+
+          } else if (command === 'LOCK_TERMINAL') {
+            terminalLocked = true;
+            currentDesignation = "WRATH";
+            authTries = 3;
+            response = "TERMINAL FORCIBLY LOCKED. ENTER DESIGNATION TO REACTIVATE.";
+            output.classList.add('locked');
+
+          } else if (command === 'OPEN_RIFT') {
+            if (riftAuthorized) {
+              response = "AUTHORIZATION GRANTED. OPENING RIFTS...\n⚠️ WARNING: MULTIPLE RIFTS DETECTED.";
+              playRiftAnimation();
+            } else {
+              response = "TERMINAL LOCKED. INPUT CODE FOR REACTIVATION.";
+              output.classList.add('locked');
+              lockTerminal('WRATH');
+            }
+
+          } else if (terminalLocked) {
+            if (currentDesignation && command === sinDesignations[currentDesignation]) {
+              terminalLocked = false;
+              authTries = 3;
+              response = `SECURITY OVERRIDE ACCEPTED. TERMINAL ACCESS RESTORED.`;
+              output.classList.remove('locked');
+              const newCommands = designationUnlocks[currentDesignation] || [];
+              newCommands.forEach(cmd => unlockedCommands.add(cmd));
+              currentDesignation = null;
+
+            } else if (command.startsWith("DESIGNATION ")) {
+              const sin = command.split(" ")[1];
+              if (sinDesignations[sin]) {
+                currentDesignation = sin;
+                authTries = 3;
+                response = `ENTER CODE FOR ${sin}`;
+              } else {
+                response = `UNKNOWN DESIGNATION: ${sin}`;
+              }
+
+            } else {
+              authTries--;
+              if (authTries <= 0) {
+                response = "TOO MANY FAILED ATTEMPTS. TERMINAL CLOSING...";
+                setTimeout(() => window.close(), 3000);
+              } else {
+                response = `INCORRECT CODE. TRIES LEFT: ${authTries}`;
+              }
+              output.classList.add('locked');
+            }
+
+          } else {
+            if (command === 'SIGIL_BREAK') {
+              response = responses[command];
+              glitch();
+              setTimeout(() => {
+                alert("You have triggered the hidden sequence.");
+                window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+              }, 500);
+
+            } else if (responses[command]) {
+              response = responses[command];
+
+            } else if (unlockedCommands.has(command)) {
+              response = responses[command] || `EXECUTING ${command}...\n[ACCESS GRANTED THROUGH DESIGNATION PROTOCOL]`;
+
+            } else if (command.startsWith("DESIGNATION ")) {
+              const sin = command.split(" ")[1];
+              if (sinDesignations[sin]) {
+                currentDesignation = sin;
+                terminalLocked = true;
+                authTries = 3;
+                response = `ENTER CODE FOR ${sin}`;
+              } else {
+                response = `UNKNOWN DESIGNATION: ${sin}`;
+              }
+
+            } else {
+              response = `COMMAND NOT RECOGNIZED: ${command}`;
+            }
+          }
+
+          output.textContent = `> ${commandRaw}\n${response}`;
+          terminal.insertBefore(output, input);
+
           input.value = '';
           terminal.scrollTop = terminal.scrollHeight;
-          if (command === 'SIGIL_BREAK') {
-            glitch();
-            setTimeout(() => alert("You have triggered the hidden sequence."), 500);
-          }
         }
       });
+    }
+
+    function lockTerminal(sin) {
+      terminalLocked = true;
+      currentDesignation = sin;
+      authTries = 3;
     }
 
     runBootSequence();
